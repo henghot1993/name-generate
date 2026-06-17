@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thai Name Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f7fa; min-height: 100vh; padding: 20px 16px; }
+    .container { background: white; border-radius: 12px; padding: 24px 20px; width: 100%; max-width: 960px; margin: 0 auto; box-shadow: 0 2px 16px rgba(0,0,0,0.1); }
+    h1 { font-size: 1.4rem; margin-bottom: 6px; color: #1a1a2e; }
+    .subtitle { color: #666; margin-bottom: 18px; font-size: 0.9rem; }
+    .row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+    label { font-size: 0.9rem; color: #444; white-space: nowrap; }
+    input[type="number"] { width: 90px; padding: 10px 12px; font-size: 1rem; border: 1.5px solid #ccc; border-radius: 8px; outline: none; }
+    input[type="number"]:focus { border-color: #3b82f6; }
+    .gender-btn { padding: 8px 16px; border: 1.5px solid #ccc; border-radius: 8px; background: white; cursor: pointer; font-size: 0.9rem; }
+    .gender-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .btn-generate { background: #3b82f6; color: white; border: none; padding: 11px 24px; font-size: 1rem; border-radius: 8px; cursor: pointer; margin-bottom: 16px; }
+    .btn-generate:active { background: #2563eb; }
+    .status { font-size: 0.85rem; color: #16a34a; margin-bottom: 12px; min-height: 18px; }
+    .section-label { font-size: 0.8rem; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; margin-top: 16px; }
+    .cols { display: flex; gap: 12px; }
+    .col { flex: 1; }
+    .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .col-label { font-weight: bold; font-size: 0.95rem; color: #333; }
+    .btn-copy { background: #22c55e; color: white; border: none; padding: 6px 12px; font-size: 0.82rem; border-radius: 8px; cursor: pointer; }
+    .btn-copy:disabled { background: #9ca3af; cursor: default; }
+    .btn-copy:active { background: #16a34a; }
+    textarea { width: 100%; height: 260px; padding: 10px; font-size: 0.88rem; font-family: 'Courier New', monospace; border: 1.5px solid #ccc; border-radius: 8px; resize: vertical; color: #333; }
+    .copied-hint { font-size: 0.78rem; color: #16a34a; min-height: 16px; margin-top: 3px; }
+    hr { border: none; border-top: 1.5px dashed #e5e7eb; margin: 18px 0 4px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>👤 Thai Name Generator</h1>
+  <p class="subtitle">สร้างชื่อ-นามสกุลภาษาไทยและอังกฤษปลอมสำหรับ Test (ชื่อไทย-อังกฤษสอดคล้องกัน)</p>
+  <div class="row">
+    <label>จำนวน:</label>
+    <input type="number" id="count" value="10" min="1" max="10000" inputmode="numeric">
+    <label>เพศ:</label>
+    <button class="gender-btn active" onclick="setGender('all', this)">ทั้งหมด</button>
+    <button class="gender-btn" onclick="setGender('male', this)">ชาย</button>
+    <button class="gender-btn" onclick="setGender('female', this)">หญิง</button>
+  </div>
+  <button class="btn-generate" onclick="generate()">▶ Generate</button>
+  <div class="status" id="status"></div>
+
+  <div class="section-label">🇹🇭 ภาษาไทย</div>
+  <div class="cols">
+    <div class="col">
+      <div class="col-header"><span class="col-label">ชื่อ</span><button class="btn-copy" id="copyThFirst" onclick="copyCol('thFirst')" disabled>📋 Copy</button></div>
+      <textarea id="outThFirst" readonly placeholder="ชื่อภาษาไทย..."></textarea>
+      <div class="copied-hint" id="hintThFirst"></div>
+    </div>
+    <div class="col">
+      <div class="col-header"><span class="col-label">นามสกุล</span><button class="btn-copy" id="copyThLast" onclick="copyCol('thLast')" disabled>📋 Copy</button></div>
+      <textarea id="outThLast" readonly placeholder="นามสกุลภาษาไทย..."></textarea>
+      <div class="copied-hint" id="hintThLast"></div>
+    </div>
+  </div>
+  <hr>
+  <div class="section-label">🇬🇧 ภาษาอังกฤษ (ทับศัพท์ตรงกับชื่อไทย)</div>
+  <div class="cols">
+    <div class="col">
+      <div class="col-header"><span class="col-label">First Name</span><button class="btn-copy" id="copyEnFirst" onclick="copyCol('enFirst')" disabled>📋 Copy</button></div>
+      <textarea id="outEnFirst" readonly placeholder="First Name..."></textarea>
+      <div class="copied-hint" id="hintEnFirst"></div>
+    </div>
+    <div class="col">
+      <div class="col-header"><span class="col-label">Last Name</span><button class="btn-copy" id="copyEnLast" onclick="copyCol('enLast')" disabled>📋 Copy</button></div>
+      <textarea id="outEnLast" readonly placeholder="Last Name..."></textarea>
+      <div class="copied-hint" id="hintEnLast"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let gender = 'all';
+let colData = { thFirst: [], thLast: [], enFirst: [], enLast: [] };
+
+// [ชื่อไทย, ชื่ออังกฤษ] คู่กันเลย
+const maleNames = [
+  ['สมชาย','Somchai'],['สมศักดิ์','Somsak'],['วิชัย','Wichai'],['ประสิทธิ์','Prasit'],
+  ['อนุชา','Anucha'],['ธนากร','Thanakorn'],['กิตติ','Kitti'],['วรวุฒิ','Worawut'],
+  ['ภานุวัฒน์','Phanuwat'],['ณัฐพล','Nattaphon'],['ชาญณรงค์','Channarong'],['พิทักษ์','Phitak'],
+  ['เอกชัย','Eakchai'],['ศุภชัย','Supachai'],['ธีรพงษ์','Thiraphong'],['นพดล','Noppadon'],
+  ['ไพโรจน์','Phairot'],['ชัยวัฒน์','Chaiwat'],['ธวัชชัย','Thawatchai'],['ปิยะ','Piya'],
+  ['กฤษณะ','Kritsana'],['อภิชัย','Aphichai'],['วันชัย','Wanchai'],['สราวุธ','Sarawut'],
+  ['ธีระ','Thira'],['พงษ์ศักดิ์','Phongsak'],['ประพันธ์','Praphan'],['สุรชัย','Surachai'],
+  ['วิทยา','Wittaya'],['มนตรี','Montri'],['ศักดิ์ชัย','Sakchai'],['ประยุทธ์','Prayut'],
+  ['ณัฐวุฒิ','Nattawut'],['ภูมินทร์','Phumin'],['กานต์','Kan'],['ธนพล','Thanaphon'],
+  ['วุฒิชัย','Wuttichai'],['อดิศร','Adisorn'],['พีระ','Phira'],['สิทธิชัย','Sittichai'],
+  ['รัฐพล','Rattaphon'],['ชิตพล','Chitphon'],['นันทวัฒน์','Nantawat'],['สุทธิพงษ์','Suttiphong'],
+  ['ปรีชา','Pricha'],['ธนัช','Thanat'],['กวี','Kawi'],['พงศ์พัฒน์','Phongphat'],
+  ['ยุทธนา','Yutthana'],['เกียรติศักดิ์','Kiattisak'],['ภาสกร','Phasakorn'],['จตุรงค์','Chaturong'],
+  ['ณัฐกร','Nattakorn'],['วสันต์','Wasan'],['ปิติ','Piti'],['อิทธิพล','Ittiphon'],
+  ['สงกรานต์','Songkran'],['ธงชัย','Thongchai'],['วีรชัย','Wirachai'],['นิรันดร์','Niran'],
+  ['ไกรสร','Kraisorn'],['พชรพล','Phatcharaphon'],['สุรเชษฐ์','Surachet'],['ชยันต์','Chayan'],
+  ['ณัฐภัทร','Nattapat'],['ภัทรพล','Phattharaphon'],['กฤตเมธ','Krittamet'],['ชนินทร์','Chanin'],
+  ['พิสิทธิ์','Phisit'],['อลงกรณ์','Alongkorn'],['เจษฎา','Chetsada'],['ณัฐดนัย','Nattadanai'],
+  ['สิทธินนท์','Sithinon'],['พัฒนา','Phattana'],['ประกิต','Prakit'],['รังสิมันตุ์','Rangsiman'],
+  ['ดำรงค์','Damrong'],['พิพัฒน์','Phiphat'],['ชาติชาย','Chatchai'],['สุวิทย์','Suwit'],
+  ['กิตติพงษ์','Kittiphong'],['นิติพล','Nitiphon'],['อนันต์','Anan'],['ภูริ','Phuri'],
+  ['เกรียงไกร','Kriangkrai'],['วิโรจน์','Wirot'],['ชูเกียรติ','Chukiat'],['สมพร','Somporn'],
+  ['บรรจง','Banchong'],['ทวีศักดิ์','Thaweesak'],['ไพบูลย์','Phaibun'],['สมหมาย','Sommai'],
+  ['ประวิทย์','Prawit'],['วิเชียร','Wichian'],['บุญช่วย','Bunchuay'],['สายัณห์','Sayan'],
+  ['วีรพล','Wiraphon'],['ปราโมทย์','Pramot'],['บุญเลิศ','Bunlert'],['ณรงค์','Narong']
+];
+
+const femaleNames = [
+  ['สมหญิง','Somying'],['วิภา','Wipha'],['นภา','Napha'],['สุดา','Suda'],
+  ['มาลี','Mali'],['พรทิพย์','Phornthip'],['วันเพ็ญ','Wanphen'],['ศิริพร','Siriporn'],
+  ['อรุณี','Arunee'],['นิภา','Nipha'],['ปวีณา','Pawina'],['ชุติมา','Chutima'],
+  ['กัลยา','Kanlaya'],['สุภาพร','Supaporn'],['ธิดา','Thida'],['รัตนา','Rattana'],
+  ['เบญจมาศ','Benchamas'],['จิราภรณ์','Jiraphon'],['สุนีย์','Sunee'],['พัชรี','Phatchari'],
+  ['ดวงพร','Duangporn'],['ณัฐธิดา','Natthida'],['ปิยะดา','Piyada'],['วราภรณ์','Waraphon'],
+  ['อัญชลี','Anchalee'],['ลลิตา','Lalita'],['ภัทรา','Phattra'],['นันทิดา','Nanthida'],
+  ['ศศิธร','Sasithon'],['ชนิดา','Chanida'],['กนกวรรณ','Kanokwan'],['ทิพวรรณ','Thippawan'],
+  ['สุมาลี','Sumali'],['พิมพ์ใจ','Phimjai'],['วิลาวัณย์','Wilawan'],['มณีรัตน์','Manirat'],
+  ['ธนพร','Thanaporn'],['ชลธิชา','Chonthicha'],['ปณิตา','Panita'],['กาญจนา','Kanchana'],
+  ['เพ็ญพักตร์','Penpak'],['สิริลักษณ์','Sirilak'],['อรนุช','Oranuch'],['ภาวิณี','Phawini'],
+  ['ทัศนีย์','Thatsanee'],['สาวิตรี','Sawitri'],['จิตรา','Chittra'],['นงนุช','Nongnuch'],
+  ['ปราณี','Pranee'],['ลดาวัลย์','Ladawan'],['เสาวลักษณ์','Saowalak'],['ยุพิน','Yupin'],
+  ['ประภา','Prapha'],['รุ่งนภา','Rungnapa'],['สุวรรณา','Suwanna'],['พรพิมล','Phornphimon'],
+  ['ศิริวรรณ','Siriwan'],['ดาวเรือง','Daorueang'],['ขวัญใจ','Khwanjai'],['นิตยา','Nittaya'],
+  ['จุฑามาศ','Chuthamat'],['พิชญา','Phitchaya'],['ธัญวรัตน์','Thanwarat'],['อภิสรา','Aphisara'],
+  ['ณัชชา','Natcha'],['กัญญาณัฐ','Kanyanat'],['ชลิตา','Chalita'],['ปิยาภรณ์','Piyaphon'],
+  ['สุธาสินี','Suthasini'],['มุกดา','Mukda'],['วาสนา','Wasana'],['บุษบา','Butsaba'],
+  ['นฤมล','Naruemon'],['สุกัญญา','Sukanya'],['พิมพ์มาดา','Phimmada'],['ธนาพร','Thanaporn'],
+  ['ชญาน์นันท์','Chayannan'],['รัชนี','Ratchanee'],['ศุภลักษณ์','Suphalak'],['อมรรัตน์','Amornrat'],
+  ['จันทร์เพ็ญ','Chanphen'],['ปิยนุช','Piyanut'],['สมฤดี','Somruedee'],['ทิพย์สุดา','Thipsuda'],
+  ['พรชนก','Phornchanok'],['รุจิรา','Ruchira'],['สิรินทร์','Sirin'],['กมลวรรณ','Kamonwan'],
+  ['ภัสสร','Phatson'],['อินทิรา','Inthira'],['กุลธิดา','Kunthida'],['นภัสสร','Naphatson'],
+  ['ชัชฎาภรณ์','Chatchadaphon'],['จรินทร์','Charin'],['ทิพย์มณี','Thipmanee'],['เกศินี','Kasinee'],
+  ['สุพรรษา','Suphansa'],['ปริชาติ','Prichat'],['อาทิตยา','Athitaya'],['ศิริมา','Sirima']
+];
+
+const lastNamePairs = [
+  ['สมบูรณ์','Somboon'],['ศรีสุข','Srisuk'],['มีสุข','Meesuk'],['รักดี','Rakdi'],
+  ['ใจดี','Jaidi'],['ทองดี','Thongdi'],['แก้วมณี','Kaewmanee'],['สุขสวัสดิ์','Suksawat'],
+  ['วงษ์ทอง','Wonthong'],['พงษ์พันธ์','Phongphan'],['รัตนโชติ','Rattanachot'],['เพชรรัตน์','Phetrat'],
+  ['สุวรรณ','Suwan'],['ทองคำ','Thongkham'],['ศิริมงคล','Sirimongkol'],['พันธุ์ดี','Phandi'],
+  ['บุญมา','Bunma'],['คงดี','Khongdi'],['มั่งมี','Mangmi'],['อินทร์ทอง','Inthong'],
+  ['ชัยมงคล','Chaimongkol'],['บุญเรือง','Bunrueang'],['สมหวัง','Somwang'],['ทรัพย์สิน','Sapsin'],
+  ['นิลกำแหง','Ninkamhaeng'],['ประเสริฐ','Prasert'],['วิไลวรรณ','Wilaiwan'],['บุญญฤทธิ์','Bunyarit'],
+  ['สุขเกษม','Sukkasem'],['ดีงาม','Dingam'],['ทองแดง','Thongdaeng'],['ศรีทอง','Srithong'],
+  ['บุญรอด','Bunrot'],['แสงทอง','Saengthong'],['วงศ์สุวรรณ','Wongsuwan'],['พูลสวัสดิ์','Phunlasawat'],
+  ['จันทร์เพ็ง','Chanpheng'],['ดอกไม้','Dokmai'],['รุ่งเรือง','Rungrueang'],['เจริญสุข','Charoensuk'],
+  ['ทองใบ','Thongbai'],['บุญเพ็ง','Bunpheng'],['ศรีวิไล','Srivilai'],['พงษ์สุวรรณ','Phongsuwan'],
+  ['ชูศรี','Chusri'],['พรมมา','Phromma'],['บุญศรี','Bunsri'],['แก้วประเสริฐ','Kaewprasert'],
+  ['ทองสุข','Thongsuk'],['สุขประเสริฐ','Sukprasert'],['เหลืองอ่อน','Lueangon'],['แดงดี','Daengdi'],
+  ['จารุวรรณ','Charuwan'],['ศรีนวล','Srinuan'],['บุญทวี','Buntawi'],['พรมสิทธิ์','Phromsit'],
+  ['คำมูล','Khammuon'],['ยอดดี','Yotdi'],['หาญกล้า','Hankla'],['กล้าหาญ','Klahan'],
+  ['ทรงพล','Songphon'],['วิริยะ','Wiriya'],['มีชัย','Michai'],['ดวงดี','Duangdi'],
+  ['ฤทธิ์ดี','Ritdi'],['บุณยรัตน์','Bunyarat'],['อุดมพร','Udomphon'],['สุขสันต์','Suksan'],
+  ['พลอยงาม','Ploingam'],['ชนะภัย','Channaphai'],['ทองพูน','Thongphun'],['ศรีประทุม','Sripratum'],
+  ['แสนดี','Saendi'],['งามดี','Ngamdi'],['สายทอง','Saithong'],['บุญธรรม','Buntham'],
+  ['เมืองสุข','Mueangsuк'],['หนูแดง','Nudaeng'],['บุญส่ง','Bunsong'],['โชคดี','Chokdi'],
+  ['ทองเจือ','Thongchuea'],['รักไทย','Rakthai'],['บุญเสริม','Bunserm'],['คำแก้ว','Khamkaew'],
+  ['ทองมา','Thongma'],['บุญชู','Bunchu'],['สมพงษ์','Somphong'],['พันธุ์งาม','Phanthungam'],
+  ['เนตรทอง','Netthong'],['ทองน้อย','Thongnoi'],['บุญยัง','Bunyang'],['บุญยอด','Bunyot'],
+  ['อุ่นเรือน','Unrueang'],['ชูชีพ','Chuchip'],['บุญเกิด','Bunkert'],['ทรงศิริ','Songsiri'],
+  ['ปานทอง','Panthong'],['สุขใจ','Sukjai'],['ทับทิม','Thapthim'],['มีแก้ว','Mikaew']
+];
+
+function setGender(g, btn) {
+  gender = g;
+  document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generate() {
+  const count = parseInt(document.getElementById('count').value);
+  if (isNaN(count) || count < 1) { alert('กรุณาใส่จำนวนที่ถูกต้อง'); return; }
+  if (count > 10000) { alert('สูงสุด 10,000 รายการ'); return; }
+
+  colData = { thFirst: [], thLast: [], enFirst: [], enLast: [] };
+
+  for (let i = 0; i < count; i++) {
+    let g = gender === 'all' ? (Math.random() < 0.5 ? 'male' : 'female') : gender;
+    const namePair = getRandom(g === 'male' ? maleNames : femaleNames);
+    const lastPair = getRandom(lastNamePairs);
+    colData.thFirst.push(namePair[0]);
+    colData.enFirst.push(namePair[1]);
+    colData.thLast.push(lastPair[0]);
+    colData.enLast.push(lastPair[1]);
+  }
+
+  document.getElementById('outThFirst').value = colData.thFirst.join('\n');
+  document.getElementById('outThLast').value = colData.thLast.join('\n');
+  document.getElementById('outEnFirst').value = colData.enFirst.join('\n');
+  document.getElementById('outEnLast').value = colData.enLast.join('\n');
+
+  ['copyThFirst','copyThLast','copyEnFirst','copyEnLast'].forEach(id => {
+    document.getElementById(id).disabled = false;
+  });
+  document.getElementById('status').textContent = `✅ สร้างแล้ว ${count.toLocaleString()} รายการ`;
+}
+
+function copyCol(key) {
+  const text = colData[key].join('\n');
+  const map = { thFirst:'hintThFirst', thLast:'hintThLast', enFirst:'hintEnFirst', enLast:'hintEnLast' };
+  const hintId = map[key];
+  const doIt = () => {
+    document.getElementById(hintId).textContent = '✅ คัดลอกแล้ว!';
+    setTimeout(() => { document.getElementById(hintId).textContent = ''; }, 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(doIt).catch(() => fallback(text, doIt));
+  } else { fallback(text, doIt); }
+}
+
+function fallback(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta);
+  ta.select(); ta.setSelectionRange(0, 99999);
+  document.execCommand('copy'); document.body.removeChild(ta); cb();
+}
+
+document.getElementById('count').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+</script>
+</body>
+</html>
